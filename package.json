@@ -1,0 +1,51 @@
+{
+  "name": "screens",
+  "version": "0.9.1",
+  "private": true,
+  "description": "Offline-first worship lyrics presentation for Mac",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test",
+    "dist:mac": "electron-builder --mac dmg --arm64 --publish never",
+    "dist:mac:intel": "electron-builder --mac dmg --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "^45.2.3",
+    "electron-builder": "^26.0.12",
+    "jsdom": "^27.4.0"
+  },
+  "build": {
+    "appId": "org.worship.simplepresenter",
+    "productName": "Screens",
+    "files": [
+      "main.js",
+      "preload.js",
+      "model.js",
+      "index.html",
+      "output.html",
+      "renderer.js",
+      "output.js",
+      "paginate.js",
+      "fit.js",
+      "demo.js",
+      "styles.css",
+      "display-config.js",
+      "transfer.js",
+      "assets/icon.png",
+      "assets/icon.icns",
+      "updates.js"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "assets/icon.icns",
+      "identity": null,
+      "artifactName": "Screens-${version}-${arch}.${ext}"
+    }
+  },
+  "productName": "Screens"
+}

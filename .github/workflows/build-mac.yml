@@ -1,0 +1,54 @@
+name: Build Screens for Mac
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - arch: arm64
+            script: dist:mac
+          - arch: x64
+            script: dist:mac:intel
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Verify release tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: test "$GITHUB_REF_NAME" = "v$(node -p 'require("./package.json").version')"
+      - run: npm run ${{ matrix.script }}
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Screens-${{ matrix.arch }}
+          path: dist/*.dmg
+          if-no-files-found: error
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Screens-*
+          merge-multiple: true
+          path: installers
+      - name: Create draft release for review
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" installers/*.dmg --repo "$GITHUB_REPOSITORY" --verify-tag --draft --generate-notes
