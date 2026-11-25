@@ -31,6 +31,21 @@ jobs:
       - run: npm run ${{ matrix.script }}
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: Verify packaged application and disk image signatures
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          apps=(dist/mac*/Screens.app)
+          images=(dist/*.dmg)
+          test "${#apps[@]}" -eq 1
+          test "${#images[@]}" -eq 1
+          codesign --verify --deep --strict --verbose=4 "${apps[0]}"
+          hdiutil verify "${images[0]}"
+          mount_dir="$(mktemp -d)"
+          hdiutil attach "${images[0]}" -readonly -nobrowse -mountpoint "$mount_dir"
+          trap 'hdiutil detach "$mount_dir"; rmdir "$mount_dir"' EXIT
+          codesign --verify --deep --strict --verbose=4 "$mount_dir/Screens.app"
       - uses: actions/upload-artifact@v4
         with:
           name: Screens-${{ matrix.arch }}
